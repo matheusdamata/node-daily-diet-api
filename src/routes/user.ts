@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FastifyInstance } from 'fastify'
 import { knex } from '../database'
 
 import { z } from 'zod'
 import { randomUUID } from 'crypto'
 
-export async function userRoutes(app: FastifyInstance) {
+export async function userRoutes(app: FastifyInstance | any) {
   app.post('/', async (req, reply) => {
     const createUserBodySchema = z.object({
       username: z.string(),
@@ -36,11 +37,13 @@ export async function userRoutes(app: FastifyInstance) {
       })
     }
 
+    const dateAndHour = new Date()
+
     await knex('users').insert({
       id: randomUUID(),
       username,
       name,
-      created_at: new Date(),
+      created_at: dateAndHour.toISOString(),
     })
 
     return reply.status(201).send()
