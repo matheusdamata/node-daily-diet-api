@@ -8,6 +8,7 @@ import { randomUUID } from 'crypto'
 import { checkSessionIdExists } from '../middleware/check-session-id-exists'
 import { checkMealExists } from '../middleware/check-meal-exists'
 import { checkUserExists } from '../middleware/check-user-exists'
+import { MealProps, UserProps } from '../@types/global'
 
 export async function mealsRoutes(app: FastifyInstance | any) {
   app.post(
@@ -58,7 +59,7 @@ export async function mealsRoutes(app: FastifyInstance | any) {
       preHandler: [checkSessionIdExists, checkUserExists, checkMealExists],
     },
     async (req, reply) => {
-      const { meal } = req as any
+      const { meal } = req
 
       return reply.status(200).send({
         data: meal,
@@ -74,20 +75,24 @@ export async function mealsRoutes(app: FastifyInstance | any) {
     async (req, reply) => {
       const { name, description, date_hour, isDiet } = req.body as any
 
-      const { meal } = req as any
+      const {
+        id,
+        name: mealName,
+        description: mealDescription,
+        date_hour: mealDateHour,
+        isDiet: mealIsDiet,
+      } = req.meal as MealProps
 
       const editMeal = {
-        name: name || meal.name,
-        description: description || meal.description,
-        date_hour: date_hour || meal.date_hour,
-        isDiet: isDiet || meal.isDiet,
+        name: name || mealName,
+        description: description || mealDescription,
+        date_hour: date_hour || mealDateHour,
+        isDiet: isDiet || mealIsDiet,
       }
-
-      console.log(editMeal)
 
       await knex('meals')
         .where({
-          id: meal.id,
+          id,
         })
         .update(editMeal)
 
@@ -95,30 +100,14 @@ export async function mealsRoutes(app: FastifyInstance | any) {
     },
   )
 
-  app.get(
-    '/:id',
-    { preHandler: [checkSessionIdExists] },
+  app.post(
+    '/list',
+    { preHandler: [checkSessionIdExists, checkUserExists] },
     async (req, reply) => {
-      const listMealParamsSchema = z.object({
-        id: z.string(),
-      })
-
-      const { id } = listMealParamsSchema.parse(req.params)
-
-      const userExists = await knex('users')
-        .where({
-          id,
-        })
-        .first()
-
-      if (!userExists) {
-        return reply.status(401).send({
-          error: 'User not exists!',
-        })
-      }
+      const { username } = req.user as UserProps
 
       const list = await knex('meals').where({
-        username: userExists.username,
+        username,
       })
 
       console.log(list)
@@ -132,11 +121,11 @@ export async function mealsRoutes(app: FastifyInstance | any) {
       preHandler: [checkSessionIdExists, checkUserExists, checkMealExists],
     },
     async (req, reply) => {
-      const { meal } = req as any
+      const { id } = req.mel as MealProps
 
       await knex('meals')
         .where({
-          id: meal.id,
+          id,
         })
         .del()
 

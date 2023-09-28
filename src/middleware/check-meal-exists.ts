@@ -8,6 +8,7 @@ export async function checkMealExists(
   reply: FastifyReply,
 ) {
   const { user } = req
+
   const checkMealParamsSchema = z.object({
     id: z.string(),
   })
